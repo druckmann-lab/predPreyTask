@@ -160,20 +160,20 @@ def trainModel_Exp(modelBlock, resultBlock, n_epochs, log_file, result_file, mod
 		epoch_real = epoch + epochs_trained
 		# Generate training samples and iterate through all models in modelList
 		print('Starting epoch %d / %d' % (epoch_real + 1, epochs_total))
-		train_set = generateSamples(modelBlock["Meta"]["N"], modelBlock["Meta"]["Distribution"], 50000, test=False)
+		sampleDict = generateSamples(modelBlock["Meta"]["N"], 20000, modelBlock["Meta"]["Layers"])
 		
 		for key, val in modelBlock.items():
 			if (key != "Meta"):
 				runEpoch(modelBlock[key]["Model"], modelBlock["Meta"]["Loss_Function"], modelBlock[key]["Optimizer"], 
-					modelBlock["Meta"]["Type"], modelBlock[key]["Batch"], train_set)
+					modelBlock["Meta"]["Type"], modelBlock[key]["Batch"], sampleDict)
 		print('Finishing epoch %d / %d' % (epoch_real + 1, epochs_total))
 		
 		# Want to record test error if the total number of epochs is a multiple 50 or this is the final epoch
 		if (((epoch_real % 10) == 0) or (epoch == (n_epochs - 1))):	
 
 			# Every 50 epochs, evaluate the performance of all the models and print summary statistics
-			testDict = generateSamples(modelBlock["Meta"]["N"], modelBlock["Meta"]["Distribution"], 100000, test=True)
-
+			testDict = generateSamples(modelBlock["Meta"]["N"], 40000, modelBlock["Meta"]["Layers"])
+			
 			print('')
 			logger.info('Finishing epoch %d / %d' % (epoch_real + 1, epochs_total))
 
@@ -225,7 +225,7 @@ def trainModel_Exp(modelBlock, resultBlock, n_epochs, log_file, result_file, mod
 		torch.save(modelBlock_State, model_file)
 
 
-def runEpoch(model, loss_fn, optimizer, dtype, batch, train_dset):
+def runEpoch(model, loss_fn, optimizer, dtype, batch, trainDict):
 	# Function RUN_EPOCH
 	# Trains model for one epoch
 	# Parameters:
@@ -233,16 +233,18 @@ def runEpoch(model, loss_fn, optimizer, dtype, batch, train_dset):
 	#		* train_dset: Training set for model
 
 
-	loader = DataLoader(train_dset, batch_size=batch, shuffle=True)
+	trainSet = torch.utils.data.TensorDataset(trainDict["Environment"], trainDict["Predator"], trainDict["Range"])
+	loader = DataLoader(trainSet, batch_size=batch, shuffle=True)
 	model.train()
 	count = 0
 	start_time = time.time()
-	for x, y in loader:
-		x = Variable(x.type(dtype), requires_grad=False)
-		y = Variable(y.type(dtype), requires_grad=False)
+	for env, pred, label in loader:
+		env = Variable(env.type(dtype), requires_grad=False)
+		pred = Variable(pred.type(dtype), requires_grad=False)
+		label = Variable(label.type(dtype), requires_grad=False)
 		# Run the model forward to compute scores and loss.
-		output = model(x, dtype).type(dtype)
-		loss = loss_fn(output, y).type(dtype)
+		output = model(env, pred, dtype).type(dtype)
+		loss = loss_fn(output, label).type(dtype)
 
 		# Run the model backward and take a step using the optimizer.
 		optimizer.zero_grad()
@@ -257,80 +259,48 @@ def checkAccuracy(model, loss_fn, dtype, batch, testDict):
 	# Evaluate model on test training set
 	# Parameters:
 	# 		* model: Pytorch model to train
-	#		* test_dset: Test set for model
+	#		* testDict: Test set for model
 
-	# Create two loaders: one with the path labels; one with the distractor labels
-	test_dsetPath = torch.utils.data.TensorDataset(testDict["Features"], testDict["Labels"])
-	loaderPath = DataLoader(test_dsetPath, batch_size=batch, shuffle=True)
+	test_dset = torch.utils.data.TensorDataset(testDict["Environment"], testDict["Predator"], testDict["Range"])
+	loader = DataLoader(test_dset, batch_size=batch, shuffle=True)
 
-	test_dsetDistract = torch.utils.data.TensorDataset(testDict["Features"], testDict["Distractors"])
-	loaderDistract = DataLoader(test_dsetDistract, batch_size=batch, shuffle=True)
+
 
 	model.eval()
 	num_correct, num_samples = 0, 0
-	num_correctPath, num_samplesPath = 0, 0
-	num_correctDistract, num_samplesDistract = 0, 0
 	losses = []
 
 	# The accuracy on all pixels and path pixels can be calculated from the image labels
 	# Also record the loss
-	for x, y in loaderPath:
+	for env, pred, label in loader:
 		# Cast the image data to the correct type and wrap it in a Variable. At
 		# test-time when we do not need to compute gradients, marking the Variable
 		# as volatile can reduce memory usage and slightly improve speed.
-		x = Variable(x.type(dtype), volatile=True)
-		y = Variable(y.type(dtype), requires_grad=False)
+		env = Variable(env.type(dtype), requires_grad=False)
+		pred = Variable(pred.type(dtype), requires_grad=False)
+		label = Variable(label.type(dtype), requires_grad=False)
 
 		# Run the model forward and compare with ground truth.
-		output = model(x, dtype).type(dtype)
-		loss =loss_fn(output, y).type(dtype)
+		output = model(env, pred, dtype).type(dtype)
+		loss = loss_fn(output, label).type(dtype)
 		preds = output.sign() 
 
 		# Compute accuracy on ALL pixels
-		num_correct += (preds.data[:, :] == y.data[:,:]).sum()
-		num_samples += x.size(0) * x.size(1)
+		num_correct += (preds.data[:, :] == label.data[:,:]).sum()
+		num_samples += pred.size(0) * pred.size(1)
 
-		# Compute Accuracy on PATH pixels
-		predictions = preds.data.cpu()
-		solutions = y.data.cpu()
-		indices = torch.nonzero(solutions==1)
-		if (indices.nelement()!=0):
-			row_idx = indices[:,0]
-			col_idx = indices[:,1]
-			num_correctPath += (predictions[row_idx, col_idx] == 1).sum()
-			num_samplesPath += solutions[row_idx, col_idx].sum()
+
 		losses.append(loss.data.cpu().numpy())
 
-	# Now find the accuracy on Distractor pixels
-	for x, y in loaderDistract:
 
-		x = Variable(x.type(dtype), volatile=True)
-		y = Variable(y.type(dtype), requires_grad=False)
-
-		# Run the model forward and compare with ground truth.
-		output = model(x, dtype).type(dtype)
-		preds = output.sign() 
-
-
-		# Compute Accuracy on PATH pixels
-		predictions = preds.data.cpu()
-		solutions = y.data.cpu()
-		indices = torch.nonzero(solutions==1)
-		if (indices.nelement()!=0):
-			row_idx = indices[:,0]
-			col_idx = indices[:,1]
-			num_correctDistract += (predictions[row_idx, col_idx] == -1).sum()
-			num_samplesDistract += solutions[row_idx, col_idx].sum()
 
 	 
 
 	# Return the fraction of datapoints that were incorrectly classified.
 	accAll = 1.0 -  (float(num_correct) / (num_samples))
-	accPath = 1.0 -  (float(num_correctPath) / (num_samplesPath))
-	accDistract = 1.0 -  (float(num_correctDistract) / (num_samplesDistract))
 	avg_loss = sum(losses)/float(len(losses))
 
-	return accAll, accPath, accDistract, avg_loss
+	return accAll, avg_loss
 
 
 
