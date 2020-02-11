@@ -17,12 +17,10 @@ def generateDictionary_Hyperopt(N_models, model_type, layers, input_size, hidden
 	
 	# This is the parameters for the distribution of path lengths passed to generate samples
 	# n is the longest path we want to generate uniformly over
-	n = 25
-	distribution = np.ones(n)/n
 
 	# Set up model dictionaries with meta entires that stores key properties of the model
 	modelBlock = {"Meta": {"Model_Type": model_type, "Loss_Function": loss_fn, "Layers": layers, 
-		"Epochs_Trained": 0, "Type": dtype, "N": image_size, "Distribution": distribution}}
+		"Epochs_Trained": 0, "Type": dtype, "N": image_size}}
 	resultBlock = {}
 
 	# Generate a vector of hyperparameters for the number of models
@@ -98,24 +96,12 @@ def generateDictionary_Exp(N_models, model_type, layers, input_size, hidden_size
 
 def modelInit(modelBlock, model_type, key, input_size, hidden_size, layers, image_size):
 	logger = logging.getLogger(__name__)
-	if (model_type == "DeepNet"):
-		modelBlock[key]["Model"] = NF.DeepNet(input_size, hidden_size, input_size, layers)
-	elif (model_type == "DeepNetInput"):
-		modelBlock[key]["Model"] = NF.DeepNetInput(input_size, hidden_size, input_size, layers)
-	elif (model_type == "Recurrent"):
-		modelBlock[key]["Model"] = NF.Recurrent(input_size, hidden_size, input_size, layers)
-	elif (model_type == "RecurrentScaled"):
-		modelBlock[key]["Model"] = NF.RecurrentScaled(input_size, hidden_size, input_size, layers)
-	elif (model_type == "RecurrentMasked5"):
-		# This produces a model with a 5 x 5 gird around the pixel
-		# The 2 indicated that we want the grid to start two pixels in every direction of a given pixel
-		modelBlock[key]["Model"] = NF.RecurrentScaledMasked(input_size, hidden_size, input_size, layers, image_size, 2)
-	elif (model_type == "RecurrentGrid"):
-		modelBlock[key]["Model"] = NF.RecurrentScaledGrid(input_size, hidden_size, input_size, layers, image_size)
-	elif (model_type == "GridFixed"):
-		modelBlock[key]["Model"] = NF.RecurrentScaledGridFixed(input_size, hidden_size, input_size, layers, image_size)
-	elif (model_type == "RecurrentMultiplicative"):
-		modelBlock[key]["Model"] = NF.RecurrentScaledMultiplicative(input_size, hidden_size, input_size, layers)
+	if (model_type == "PredPrey_Grid"):
+		num_nodes = image_size**2
+		modelBlock[key]["Model"] = NF.RecurrentShared_PredPrey(num_nodes, layers, num_nodes*5, image_size)
+	elif(model_type == "PredPrey_Fixed"):
+		num_nodes = image_size**2
+		modelBlock[key]["Model"] = NF.RecurrentFixed_PredPrey(num_nodes, layers, num_nodes*5, image_size)
 	else:
 		logger.warning('Model type not recognized')
 

@@ -69,18 +69,18 @@ def trainModel(modelBlock, n_epochs, log_file):
 		epoch_real = epoch + epochs_trained
 		# Generate training samples and iterate through all models in modelList
 		print('Starting epoch %d / %d' % (epoch_real + 1, epochs_total))
-		train_set = generateSamples(modelBlock["Meta"]["N"], modelBlock["Meta"]["Distribution"], 50000, test=False)
+		sampleDict = generateSamples(modelBlock["Meta"]["N"], 20000, modelBlock["Meta"]["Layers"])
 		for key, val in modelBlock.items():
 			if (key != "Meta"):
 				runEpoch(modelBlock[key]["Model"], modelBlock["Meta"]["Loss_Function"], modelBlock[key]["Optimizer"], 
-					modelBlock["Meta"]["Type"], modelBlock[key]["Batch"], train_set)
+					modelBlock["Meta"]["Type"], modelBlock[key]["Batch"], sampleDict)
 		print('Finishing epoch %d / %d' % (epoch_real + 1, epochs_total))
 		
 		# Want to record test error if the total number of epochs is a multiple 50 or this is the final epoch
 		if (((epoch_real % 50) == 0) or (epoch == (n_epochs - 1))):	
 
 			# Every 50 epochs, evaluate the performance of all the models and print summary statistics
-			testDict = generateSamples(modelBlock["Meta"]["N"], modelBlock["Meta"]["Distribution"], 100000, test=True)
+			testDict = generateSamples(modelBlock["Meta"]["N"], 40000, modelBlock["Meta"]["Layers"])
 
 			loss = []
 			accAll = []
