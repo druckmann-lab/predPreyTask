@@ -13,7 +13,7 @@ from torch.utils.data.sampler import SubsetRandomSampler
 import matplotlib.pyplot as plt
 import math
 import time
-from samples import generateSamples
+from samplesPropagation import generateSamples
 from scipy.io import savemat
 import collections
 import shutil
@@ -63,47 +63,54 @@ def trainModel(modelBlock, n_epochs, log_file):
 	epochs_total = epochs_trained + n_epochs
 	print(epochs_total)
 
+	#if ((epochs_total % 50) != 0):
+	#	logger.warning("Epoch total not a multiple of 50; pruning will occur at the closest multiple of 50.")
+	# 50000
 
 	for epoch in range(n_epochs):
 
 		epoch_real = epoch + epochs_trained
 		# Generate training samples and iterate through all models in modelList
 		print('Starting epoch %d / %d' % (epoch_real + 1, epochs_total))
-		sampleDict = generateSamples(modelBlock["Meta"]["N"], 20000, modelBlock["Meta"]["Layers"])
+		sampleDict = generateSamples(modelBlock["Meta"]["N"], 5000, modelBlock["Meta"]["Layers"])
 		for key, val in modelBlock.items():
 			if (key != "Meta"):
 				runEpoch(modelBlock[key]["Model"], modelBlock["Meta"]["Loss_Function"], modelBlock[key]["Optimizer"], 
 					modelBlock["Meta"]["Type"], modelBlock[key]["Batch"], sampleDict)
 		print('Finishing epoch %d / %d' % (epoch_real + 1, epochs_total))
+		model = modelBlock[0]["Model"]
+
 		
 		# Want to record test error if the total number of epochs is a multiple 50 or this is the final epoch
-		if (((epoch_real % 50) == 0) or (epoch == (n_epochs - 1))):	
+		if (((epoch_real % 20) == 0) or (epoch == (n_epochs - 1))):	
 
 			# Every 50 epochs, evaluate the performance of all the models and print summary statistics
-			testDict = generateSamples(modelBlock["Meta"]["N"], 40000, modelBlock["Meta"]["Layers"])
+			testDict = generateSamples(modelBlock["Meta"]["N"], 10000, modelBlock["Meta"]["Layers"])
+
+			## This code was originally to check the run/hide percentages of the samples generated
+			## It now will not work because the sampler outputs one-hot encoded class labels
+			#check = testDict["Label"]
+			#frac = (check[check == 1]).sum()/40000
+			#print(frac)
 
 			loss = []
 			accAll = []
-			accPath = []
-			accDistract = []
+
 			for key, val in modelBlock.items():
 				if (key != "Meta"):
-					model_accAll, model_accPath, model_accDistract, model_loss = checkAccuracy(modelBlock[key]["Model"], 
+					model_accAll, model_loss = checkAccuracy(modelBlock[key]["Model"], 
 						modelBlock["Meta"]["Loss_Function"], modelBlock["Meta"]["Type"], modelBlock[key]["Batch"], testDict)
 					modelBlock[key]["Loss"] = model_loss
 					modelBlock[key]["Acc_All"] = model_accAll
-					modelBlock[key]["Acc_Path"] = model_accPath
-					modelBlock[key]["Acc_Distract"] = model_accDistract
+					
 
 					loss.append(model_loss)
 					accAll.append(model_accAll)
-					accPath.append(model_accPath)
-					accDistract.append(model_accDistract)
+				
 
 			loss_array = np.asarray(loss)
 			accAll_array = np.asarray(accAll)
-			accPath_array = np.asarray(accPath)
-			accDistract_array = np.asarray(accDistract)
+		
 
 				
 			print('')
@@ -112,10 +119,6 @@ def trainModel(modelBlock, n_epochs, log_file):
 				np.median(loss_array), np.min(loss_array)))
 			logger.info('[Accuracy (All pixels)] Mean:%.6f, Median:%.6f, Best:%.6f ' % (np.mean(accAll_array),
 				np.median(accAll_array), np.min(accAll_array)))
-			logger.info('[Accuracy (Edge-Connected Paths)] Mean:%.6f, Median:%.6f, Best:%.6f ' % (np.mean(accPath_array),
-				np.median(accPath_array), np.min(accPath_array)))
-			logger.info('[Accuracy (Distractors)] Mean:%.6f, Median:%.6f, Best:%.6f ' % (np.mean(accDistract_array),
-				np.median(accDistract_array), np.min(accDistract_array)))
 			logger.info('')
 			print('')
 

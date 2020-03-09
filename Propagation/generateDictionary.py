@@ -96,12 +96,12 @@ def generateDictionary_Exp(N_models, model_type, layers, input_size, hidden_size
 
 def modelInit(modelBlock, model_type, key, input_size, hidden_size, layers, image_size):
 	logger = logging.getLogger(__name__)
-	if (model_type == "PredPrey_Grid"):
+	if (model_type == "FixedWeights"):
 		num_nodes = image_size**2
-		modelBlock[key]["Model"] = NF.RecurrentShared_PredPrey(num_nodes, layers, num_nodes*5, image_size)
-	elif(model_type == "PredPrey_Fixed"):
+		modelBlock[key]["Model"] = NF.PropagationOnly_FixedWeights(num_nodes, layers, num_nodes*5, image_size)
+	elif(model_type == "SharedPixel"):
 		num_nodes = image_size**2
-		modelBlock[key]["Model"] = NF.RecurrentFixed_PredPrey(num_nodes, layers, num_nodes*5, image_size)
+		modelBlock[key]["Model"] = NF.PropagationOnly_SharedPixel(num_nodes, layers, num_nodes*5, image_size)
 	else:
 		logger.warning('Model type not recognized')
 

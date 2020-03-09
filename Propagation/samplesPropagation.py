@@ -41,38 +41,26 @@ def generateSamples(N, numTraining, steps):
 		# Stop tracks when one of the ranges includes the cave
 		# Label get set initially to 1, the proper value if the cave is in neither range
 
+
+		# Set up predator range
+		predatorRange = np.zeros((N,N))
+
+		row_predator, col_predator = np.nonzero(predator)
+		l = len(row_predator)
+		rowNext_predator = []
+		colNext_predator = []
+
+		for i in range(0, l):
+			predatorRange[row_predator[i], col_predator[i]] = 1
+			rowNext_predator.append(row_predator[i])
+			colNext_predator.append(col_predator[i])
+
+		row_predator = []
+		col_predator = []
+
 		q = 0
 
 		while(q < steps):
-
-			# Propagate Prey
-			preyRange_Old = preyRange[:,:]
-			del row_prey[:]
-			del col_prey[:]
-			row_prey = rowNext_prey[:]
-			col_prey = colNext_prey[:]
-			l = len(row_prey)
-			del rowNext_prey[:]
-			del colNext_prey[:]
-			for i in range(0, l):
-				row_current = row_prey[i]
-				col_current = col_prey[i]
-				if ((row_current != 0) and (X[(row_current - 1), col_current] == 0) and (preyRange[(row_current - 1), col_current] == 0)):
-					preyRange[row_current - 1, col_current] = 1
-					rowNext_prey.append(row_current - 1)
-					colNext_prey.append(col_current)
-				if ((row_current != N-1) and (X[row_current + 1, col_current] == 0) and (preyRange[(row_current + 1), col_current] == 0)):
-					preyRange[row_current + 1, col_current] = 1
-					rowNext_prey.append(row_current + 1)
-					colNext_prey.append(col_current)
-				if ((col_current != 0) and (X[row_current, col_current-1] == 0) and (preyRange[row_current, col_current-1] == 0)):
-					preyRange[row_current, col_current-1] = 1
-					rowNext_prey.append(row_current)
-					colNext_prey.append(col_current-1)
-				if ((col_current != N-1) and (X[row_current, col_current+1] == 0) and (preyRange[row_current, col_current+1] == 0)):
-					preyRange[row_current, col_current+1] = 1
-					rowNext_prey.append(row_current)
-					colNext_prey.append(col_current+1)
 
 
 			# Propagate predator
@@ -114,8 +102,9 @@ def generateSamples(N, numTraining, steps):
 		Xvec[Xvec == 0] = -1
 		predVec = np.reshape(predator, (1, N2))
 		predVec[predVec == 0] = -1
-		preyVec = np.reshape(prey, (1, N2))
-		preyVec[preyVec == 0] = -1
+		predRangeVec = np.reshape(predatorRange, (1, N2))
+		predRangeVec[predRangeVec == 0] = -1
+
 
 
 		trainEnv[j, :] = Xvec
@@ -132,9 +121,7 @@ def generateSamples(N, numTraining, steps):
 
 	trainEnv = torch.from_numpy(trainEnv)
 	trainPred = torch.from_numpy(trainPred)
-	trainPrey = torch.from_numpy(trainPrey)
-	trainCave = torch.from_numpy(trainCave)
-	trainLabel = torch.from_numpy(trainLabel)
+	trainPredRange = torch.from_numpy(trainPredRange)
 
 	sampleDict = {"Environment": trainEnv, "Predator": trainPred, "Range": trainPredRange}
 

@@ -18,7 +18,7 @@ import collections
 import shutil
 
 # Import functions from submodules
-from train import trainModel_Exp
+from train import trainModel
 from generateDictionary import generateDictionary_Exp, convertStateDict
 
 
@@ -52,7 +52,7 @@ parser.add_argument('--n_models', default=100, type=int,
 parser.add_argument('--n_epochs', default=100, type=int,
 					help='number of total epochs we want the model trained')
 parser.add_argument('--use_gpu', action='store_true')
-parser.add_argument('--model', default='Recurrent', type=str,
+parser.add_argument('--model', default='FixedWeights', type=str,
 					help='model types to perform hyperparamer optimization over')
 parser.add_argument('--layers', default=5, type=int,
 					help='number of layers in model')
@@ -80,8 +80,8 @@ def main(args):
 	exp_name = args.exp_name
 
 	# Make sure the result directory exists.  If not create
-	directory_logs = '../../EdgePixel_Results/Experiments/Logs'
-	directory_results = '../../EdgePixel_Results/Experiments/ResultBlock'
+	directory_logs = '../../PredPrey_Results/Propagation/Logs'
+	directory_results = '../../PredPrey_Results/Propagation/ResultBlock'
 
 	if not os.path.exists(directory_logs):
 		os.makedirs(directory_logs)
@@ -91,9 +91,9 @@ def main(args):
 
 
 	# Create name for result folders
-	log_file = '../../EdgePixel_Results/Experiments/Logs/'+ exp_name + '.log'
-	result_file = '../../EdgePixel_Results/Experiments/ResultBlock/resultBlock_' + exp_name + '.pth.tar'
-	model_file = '../../EdgePixel_Results/Experiments/ResultBlock/modelBlock_' + exp_name + '.pth.tar'
+	log_file = '../../PredPrey_Results/Propagation/Logs/'+ exp_name + '.log'
+	result_file = '../../PredPrey_Results/Propagation/ResultBlock/resultBlock_' + exp_name + '.pth.tar'
+	model_file = '../../PredPrey_Results/Propagation/ResultBlock/modelBlock_' + exp_name + '.pth.tar'
 
 	# Initizlize Logger
 	logger = logging.getLogger(__name__)
@@ -121,14 +121,9 @@ def main(args):
 		hyperparameter = torch.load(hyper_path)
 	else:
 		print("=> no hyperparameter block found at '{}'".format(hyper_path))
-		# hyperparameter = {}
-		# hyperparameter["RecurrentGrid"] = {}
-		# hyperparameter["RecurrentGrid"][25] = {"Learning": 1e-3, "Batch": 32, "Weight_Decay": 0}
-		# hyperparameter["RecurrentGrid"][30] = {"Learning": 1e-3, "Batch": 32, "Weight_Decay": 0}
-		# hyperparameter["RecurrentMasked5"] = {}
-		# hyperparameter["RecurrentMasked5"][5] = {"Learning": 1e-4, "Batch": 32, "Weight_Decay": 1e-3}
-		# hyperparameter["Recurrent"] = {}
-		# hyperparameter["Recurrent"][5] = {"Learning": 1e-4, "Batch": 32, "Weight_Decay": 1e-3}
+		hyperparameter = {}
+		hyperparameter[model_type] = {}
+		hyperparameter[model_type][layers] = {"Learning": 1e-3, "Batch": 32, "Weight_Decay": 0}
 
 
 	# Set up experiment block
@@ -153,9 +148,9 @@ def main(args):
 	# Figure out how many epochs are left to train
 	epochs_remaining = n_epochs - modelBlock["Meta"]["Epochs_Trained"]
 
-	trainModel_Exp(modelBlock, resultBlock, epochs_remaining, log_file, result_file, model_file)
+	trainModel(modelBlock, epochs_remaining, log_file)
 
-	torch.save(resultBlock, result_file)
+	# torch.save(resultBlock, result_file)
 
 	modelBlock_State = convertStateDict(modelBlock)
 	torch.save(modelBlock_State, model_file)

@@ -1,7 +1,9 @@
 import torch
+import torch.nn as nn
 import numpy as np
 import matplotlib.pyplot as plt
 from torch.autograd import Variable 
+from torch.utils.data import DataLoader
 
 import networkFiles as NF
 from samplesPropagation import generateSamples
@@ -17,13 +19,13 @@ dtype = torch.FloatTensor
 
 model = NF.PropagationOnly_FixedWeights(num_nodes, layers, num_nodes*5, image_size)
 model.type(dtype)
-testDict = generateSamples(image_size, 10000, layers)
+testDict = generateSamples(image_size, 1000, layers)
 
 
 test_dsetPath = torch.utils.data.TensorDataset(testDict["Environment"], testDict["Predator"], testDict["Range"])
-loader = DataLoader(test_dsetPath, batch_size=batch, shuffle=True)
+loader = DataLoader(test_dsetPath, batch_size=32, shuffle=True)
 
-
+loss_fn = nn.MSELoss()
 
 model.eval()
 num_correct, num_samples = 0, 0
@@ -56,11 +58,10 @@ for env, pred, label in loader:
  
 
 # Return the fraction of datapoints that were incorrectly classified.
-accAll = 1.0 -  (float(num_correct) / (num_samples))
+errorAll = 1.0 -  (float(num_correct) / (num_samples))
 avg_loss = sum(losses)/float(len(losses))
 
-print(decision)
-print(label)
+print(errorAll)
 
 
 

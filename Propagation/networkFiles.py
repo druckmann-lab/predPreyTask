@@ -46,8 +46,8 @@ class RangePropgation_SharedPixel(torch.nn.Module):
 
 		self.mask = weightMask
 		self.diagMask = diagMask
-		self.invertMask = torch.ones((hidden, hidden)).type(torch.ByteTensor) - self.mask
-		self.invertDiag = torch.ones((hidden, hidden)).type(torch.ByteTensor) - self.diagMask
+		self.invertMask = ~self.mask #torch.ones((hidden, hidden)).type(torch.ByteTensor) - self.mask
+		self.invertDiag = ~self.diagMask #torch.ones((hidden, hidden)).type(torch.ByteTensor) - self.diagMask
 		self.iteration = layers
 
 		# For this case we want these to remain fixed
@@ -103,8 +103,8 @@ class RangePropgation_FixedWeights(torch.nn.Module):
 
 		self.mask = weightMask
 		self.diagMask = diagMask
-		self.invertMask = torch.ones((hidden, hidden)).type(torch.ByteTensor) - self.mask
-		self.invertDiag = torch.ones((hidden, hidden)).type(torch.ByteTensor) - self.diagMask
+		self.invertMask = ~self.mask #torch.ones((hidden, hidden)).type(torch.ByteTensor) - self.mask
+		self.invertDiag = ~self.diagMask #torch.ones((hidden, hidden)).type(torch.ByteTensor) - self.diagMask
 		self.iteration = layers
 
 		# For this case we want these to remain fixed
