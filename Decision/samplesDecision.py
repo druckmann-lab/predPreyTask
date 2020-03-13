@@ -221,8 +221,8 @@ def generateSamples(N, numTraining, steps):
 				numRun = numRun + 1
 
 			j = j+1
-			if (j % 1000 == 0):
-				print(j)
+			# if (j % 1000 == 0):
+			# 	print(j)
 
 	# Once all the samples are generated, return dictionary of samples
 
