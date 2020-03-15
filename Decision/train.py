@@ -69,7 +69,7 @@ def trainModel(modelBlock, n_epochs, log_file):
 		epoch_real = epoch + epochs_trained
 		# Generate training samples and iterate through all models in modelList
 		print('Starting epoch %d / %d' % (epoch_real + 1, epochs_total))
-		sampleDict = generateSamples(modelBlock["Meta"]["N"], 5000, modelBlock["Meta"]["Layers"])
+		sampleDict = generateSamples(modelBlock["Meta"]["N"], 500, modelBlock["Meta"]["Layers"])
 		for key, val in modelBlock.items():
 			if (key != "Meta"):
 				runEpoch(modelBlock[key]["Model"], modelBlock["Meta"]["Loss_Function"], modelBlock[key]["Optimizer"], 
@@ -82,7 +82,7 @@ def trainModel(modelBlock, n_epochs, log_file):
 		if (((epoch_real % 10) == 0) or (epoch == (n_epochs - 1))):	
 
 			# Every 50 epochs, evaluate the performance of all the models and print summary statistics
-			testDict = generateSamples(modelBlock["Meta"]["N"], 10000, modelBlock["Meta"]["Layers"])
+			testDict = generateSamples(modelBlock["Meta"]["N"], 1000, modelBlock["Meta"]["Layers"])
 
 			## This code was originally to check the run/hide percentages of the samples generated
 			## It now will not work because the sampler outputs one-hot encoded class labels
@@ -246,7 +246,7 @@ def runEpoch(model, loss_fn, optimizer, dtype, batch, trainDict):
 		cave = Variable(cave.type(dtype), requires_grad=False)
 		label = Variable(label.type(dtype), requires_grad=False)
 		# Run the model forward to compute scores and loss.
-		_, _, output = model(env, pred, prey, cave, dtype)
+		_, _, output = model(env, prey, pred, cave, dtype)
 		loss = loss_fn(output, label).type(dtype)
 
 		# Run the model backward and take a step using the optimizer.
@@ -287,13 +287,12 @@ def checkAccuracy(model, loss_fn, dtype, batch, testDict):
 		label = Variable(label.type(dtype), requires_grad=False)
 
 		# Run the model forward and compare with ground truth.
-		_, _, output = model(env, pred, prey, cave, dtype)
+		_, _, output = model(env, prey, pred, cave, dtype)
 		loss = loss_fn(output, label).type(dtype)
-		preds = output.sign() 
 
 		# Compute accuracy on ALL pixels
-		num_correct += (preds.data[:, :] == label.data[:,:]).sum()
-		num_samples += pred.size(0) * pred.size(1)
+		num_correct += (torch.argmax(label, dim = 1) == torch.argmax(output, dim = 1)).sum()
+		num_samples += label.size(0)
 
 
 		losses.append(loss.data.cpu().numpy())
