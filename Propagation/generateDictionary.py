@@ -25,7 +25,7 @@ def generateDictionary_Hyperopt(N_models, model_type, layers, input_size, hidden
 
 	# Generate a vector of hyperparameters for the number of models
 	lr_vec = np.power(10, (np.random.uniform(-2.5, -5, N_models)))
-	weight_decay_vec = np.power(10, (np.random.uniform(-2.5, -5, N_models)))
+	#weight_decay_vec = np.power(10, (np.random.uniform(-2.5, -5, N_models)))
 	batch_size_vec = np.around(np.random.uniform(32, 256, N_models))
 	batch_size_vec = batch_size_vec.astype(int)
 
@@ -35,7 +35,7 @@ def generateDictionary_Hyperopt(N_models, model_type, layers, input_size, hidden
 		modelBlock[i]["Model"].type(dtype)
 		modelBlock[i]["Learning"] = lr_vec[i]
 		modelBlock[i]["Batch"] = np.asscalar(batch_size_vec[i])
-		modelBlock[i]["Weight_Decay"] = np.asscalar(weight_decay_vec[i])
+		modelBlock[i]["Weight_Decay"] = 0.0 #np.asscalar(weight_decay_vec[i])
 		modelBlock[i]["Optimizer"] = optim.Adam(modelBlock[i]["Model"].parameters(), 
 			lr = modelBlock[i]["Learning"], weight_decay = modelBlock[i]["Weight_Decay"])
 		modelBlock[i]["Loss"] = 100.0

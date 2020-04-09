@@ -56,7 +56,9 @@ parser.add_argument('--model', default='FixedWeights', type=str,
 					help='model types to perform hyperparamer optimization over')
 parser.add_argument('--layers', default=5, type=int,
 					help='number of layers in model')
-parser.add_argument('--image_size', default=15, type=int,
+parser.add_argument('--lr', default=1e-4, type=int,
+					help='learning rate for training')
+parser.add_argument('--image_size', default=20, type=int,
 					help='number of epochs in between hyperband pruning')
 
 
@@ -77,6 +79,7 @@ def main(args):
 	model_type = args.model
 	layers = args.layers
 	image_size = args.image_size
+	lr = args.lr
 	exp_name = args.exp_name
 
 	# Make sure the result directory exists.  If not create
@@ -123,7 +126,7 @@ def main(args):
 		print("=> no hyperparameter block found at '{}'".format(hyper_path))
 		hyperparameter = {}
 		hyperparameter[model_type] = {}
-		hyperparameter[model_type][layers] = {"Learning": 1e-3, "Batch": 32, "Weight_Decay": 0}
+		hyperparameter[model_type][layers] = {"Learning": lr, "Batch": 32, "Weight_Decay": 0}
 
 
 	# Set up experiment block

@@ -82,7 +82,7 @@ def trainModel(modelBlock, n_epochs, log_file):
 
 		
 		# Want to record test error if the total number of epochs is a multiple 50 or this is the final epoch
-		if (((epoch_real % 20) == 0) or (epoch == (n_epochs - 1))):	
+		if (((epoch_real % 50) == 0) or (epoch == (n_epochs - 1))):	
 
 			# Every 50 epochs, evaluate the performance of all the models and print summary statistics
 			testDict = generateSamples(modelBlock["Meta"]["N"], 10000, modelBlock["Meta"]["Layers"])
@@ -285,12 +285,22 @@ def checkAccuracy(model, loss_fn, dtype, batch, testDict):
 
 		# Run the model forward and compare with ground truth.
 		output = model(env, pred, dtype).type(dtype)
-		loss = loss_fn(output, label).type(dtype)
-		preds = output.sign() 
 
-		# Compute accuracy on ALL pixels
-		num_correct += (preds.data[:, :] == label.data[:,:]).sum()
-		num_samples += pred.size(0) * pred.size(1)
+		# This if statement accounts for a batch of 1
+		if output.dim() == 1:
+			loss = loss_fn(output.data.unsqueeze(0), label).type(dtype)
+			preds = output.sign() 
+
+			# Compute accuracy on ALL pixels
+			num_correct += (preds.data.unsqueeze(0)[:, :] == label.data[:,:]).sum()
+			num_samples += pred.size(0) * pred.size(1)
+		else:
+			loss = loss_fn(output.data, label).type(dtype)
+			preds = output.sign() 
+
+			# Compute accuracy on ALL pixels
+			num_correct += (preds.data[:, :] == label.data[:,:]).sum()
+			num_samples += pred.size(0) * pred.size(1)
 
 
 		losses.append(loss.data.cpu().numpy())

@@ -12,16 +12,18 @@ from samplesDecision import generateSamples
 
 
 # General parameters that would get set in other code
-layers = 2
+layers = 8
 image_size = 20
 N = image_size
 num_nodes = image_size**2
+r = 3
 
 dtype = torch.FloatTensor
 
-model = NF.FixedPropagation_PredPrey(num_nodes, layers, num_nodes*5, image_size)
+model = NF.FixedAll_PredPrey(num_nodes, layers, num_nodes*5, image_size)
 model.type(dtype)
-testDict = generateSamples(image_size, 2, layers)
+
+testDict = generateSamples(image_size, r, layers)
 
 
 test_dsetPath = torch.utils.data.TensorDataset(testDict["Environment"], testDict["Predator"], testDict["Prey"], testDict["Cave"], testDict["Label"])
@@ -46,7 +48,7 @@ for env, pred, prey, cave, label in loader:
 	label = Variable(label.type(dtype), requires_grad=False)
 
 	# Run the model forward and compare with ground truth.
-	prey_range, pred_range, output = model(env, prey, pred, cave, dtype)
+	prey_range, pred_range, output, trace = model(env, prey, pred, cave, dtype)
 	loss = loss_fn(output, label).type(dtype)
 	#preds = output.sign() 
 
@@ -57,13 +59,13 @@ for env, pred, prey, cave, label in loader:
 
 	losses.append(loss.data.cpu().numpy())
 
-print(output)
-print(label)
-print(loss)
+# print(output)
+# print(label)
+# print(loss)
 
-errorAll = 1.0 -  (float(num_correct) / (num_samples))
-print(errorAll)
-print(num_samples)
+# errorAll = 1.0 -  (float(num_correct) / (num_samples))
+# print(errorAll)
+# print(num_samples)
 
  
 
@@ -71,10 +73,15 @@ cmap1 = mpl.colors.LinearSegmentedColormap.from_list('my_cmap',['white','black']
 cmap2 = mpl.colors.LinearSegmentedColormap.from_list('my_cmap2',['white','skyblue'],256)
 cmap3 = mpl.colors.LinearSegmentedColormap.from_list('my_cmap2',['white','blue'],256)
 cmap4 = mpl.colors.LinearSegmentedColormap.from_list('my_cmap2',['white','pink'],256)
+cmap5 = mpl.colors.LinearSegmentedColormap.from_list('my_cmap2',['white','mediumvioletred'],256)
+cmap6 = mpl.colors.LinearSegmentedColormap.from_list('my_cmap2',['white','goldenrod'],256)
 
 cmap2._init() # create the _lut array, with rgba values
 cmap3._init()
 cmap4._init()
+cmap5._init()
+cmap6._init()
+
 
 # create your alpha array and fill the colormap with them.
 # here it is progressive, but you can create whathever you want
@@ -82,18 +89,83 @@ alphas = np.linspace(0, 0.8, cmap2.N+3)
 cmap2._lut[:,-1] = alphas
 cmap3._lut[:,-1] = alphas
 cmap4._lut[:,-1] = alphas
+cmap5._lut[:,-1] = alphas
+cmap6._lut[:,-1] = alphas
 
 
 # # Look at the output
-fig1, ax = plt.subplots(1, 2)
+fig1, ax = plt.subplots(r, 3)
 
+for q in range(r):
 #ax[0, 0].imshow(np.reshape(output[0,:].detach().numpy(), (N, N)), cmap='Greys',  interpolation='none')
-ax[0].imshow(-1*np.reshape(env[0,:].numpy(), (N, N)), interpolation='none', cmap=cmap1, origin='lower')
-ax[0].imshow(np.reshape(pred_range[0,:].detach().numpy(), (N, N)), interpolation='none', cmap=cmap2, origin='lower')
-ax[0].imshow(np.reshape(pred[0,:].detach().numpy(), (N, N)), interpolation='none', cmap=cmap3, origin='lower')
-ax[1].imshow(-1*np.reshape(env[0,:].numpy(), (N, N)), interpolation='none', cmap=cmap1, origin='lower')
-ax[1].imshow(np.reshape(prey_range[0,:].detach().numpy(), (N, N)), interpolation='none', cmap=cmap4, origin='lower')
-ax[1].imshow(np.reshape(prey[0,:].detach().numpy(), (N, N)), interpolation='none', cmap=cmap3, origin='lower')
+	ax[q, 0].imshow(-1*np.reshape(env[q,:].numpy(), (N, N)), cmap=cmap1, origin='lower')
+	ax[q, 0].imshow(np.reshape(pred_range[q,:].detach().numpy(), (N, N)), cmap=cmap2, origin='lower')
+	ax[q, 0].imshow(np.reshape(pred[q,:].detach().numpy(), (N, N)), cmap=cmap3, origin='lower')
+	ax[q, 0].imshow(np.reshape(cave[q,:].detach().numpy(), (N, N)), cmap=cmap6, origin='lower')
+	
+	ax[q, 0].tick_params(
+	    axis='y',          # changes apply to the x-axis
+	    which='both',      # both major and minor ticks are affected
+	    left=False,      # ticks along the bottom edge are off
+	    right=False,         # ticks along the top edge are off
+	    labelleft=False) # labels along the bottom edge are off
+
+	ax[q, 0].tick_params(
+	    axis='x',          # changes apply to the x-axis
+	    which='both',      # both major and minor ticks are affected
+	    bottom=False,      # ticks along the bottom edge are off
+	    top=False,         # ticks along the top edge are off
+	    labelbottom=False) # labels along the bottom edge are off
 
 
-plt.show()
+	ax[q, 1].imshow(-1*np.reshape(env[q,:].numpy(), (N, N)), cmap=cmap1, origin='lower')
+	ax[q, 1].imshow(np.reshape(prey_range[q,:].detach().numpy(), (N, N)), cmap=cmap4, origin='lower')
+	ax[q, 1].imshow(np.reshape(prey[q,:].detach().numpy(), (N, N)), cmap=cmap5, origin='lower')
+	ax[q, 1].imshow(np.reshape(cave[q,:].detach().numpy(), (N, N)), cmap=cmap6, origin='lower') 
+	
+	ax[q, 1].tick_params(
+	    axis='y',          # changes apply to the x-axis
+	    which='both',      # both major and minor ticks are affected
+	    left=False,      # ticks along the bottom edge are off
+	    right=False,         # ticks along the top edge are off
+	    labelleft=False) # labels along the bottom edge are off
+
+	ax[q, 1].tick_params(
+	    axis='x',          # changes apply to the x-axis
+	    which='both',      # both major and minor ticks are affected
+	    bottom=False,      # ticks along the bottom edge are off
+	    top=False,         # ticks along the top edge are off
+	    labelbottom=False) # labels along the bottom edge are off
+
+	ax[q, 2].step(np.arange(0, layers+1), np.insert(1.5 + np.round(trace[q, 0, :].detach().numpy()), 0, 1.5))
+	ax[q, 2].step(np.arange(0, layers+1), np.insert(np.round(trace[q, 1, :].detach().numpy()), 0, 0), color='mediumvioletred')
+	ax[q, 2].set_ylim((-0.2, 2.7))
+	ax[q, 2].set_xlabel('Time Steps')
+
+	#ax[q, 2].axis('off')
+
+	ax[q, 2].tick_params(
+	    axis='y',          # changes apply to the x-axis
+	    which='both',      # both major and minor ticks are affected
+	    left=False,      # ticks along the bottom edge are off
+	    right=False,         # ticks along the top edge are off
+	    labelleft=False) # labels along the bottom edge are off
+
+	major_ticks = np.arange(0, layers, 5)
+	minor_ticks = np.arange(0, layers, 1)
+
+	ax[q, 2].set_xticks(major_ticks)
+	ax[q, 2].set_xticks(minor_ticks, minor=True)
+
+
+	# ax[q, 2].tick_params(axis='x',which='minor',bottom=True)
+
+
+	ax[q,2].spines['top'].set_visible(False)
+	ax[q,2].spines['right'].set_visible(False)
+	ax[q,2].spines['bottom'].set_visible(False)
+	ax[q,2].spines['left'].set_visible(False)
+
+
+fig1.savefig("decision.pdf", bbox_inches = 'tight',
+		pad_inches = 0)

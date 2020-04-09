@@ -19,6 +19,9 @@ class PropagationOnly_SharedPixel(torch.nn.Module):
 	def forward(self, X, pred, dtype):	
 		
 		pred_range = self.iteratedLayer_Pred(pred, X)
+
+		# if (pred_range.dim() == 1):
+		# 	pred_range.unsqueeze(0)
 		
 		return pred_range
 
@@ -51,7 +54,7 @@ class RangePropgation_SharedPixel(torch.nn.Module):
 		self.iteration = layers
 
 		# For this case we want these to remain fixed
-		self.hiddenWeight = nn.Parameter(torch.randn(hidden, hidden), requires_grad=False)
+		self.hiddenWeight = nn.Parameter(torch.ones(hidden, hidden), requires_grad=False)
 		self.bias = nn.Parameter(torch.ones(hidden, 1), requires_grad=True)
 		self.inputWeight = nn.Parameter(torch.randn(D_input, hidden), requires_grad=False)
 
