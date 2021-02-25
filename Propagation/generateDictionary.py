@@ -130,15 +130,15 @@ def loadStateDict(modelBlock_State):
 	layers = modelBlock['Meta']['Layers']
 	image_size = modelBlock['Meta']['N']
 
-	lr = modelBlock['Meta']['Learning']
-	weight_decay = modelBlock['Meta']['Weight_Decay']
+	#lr = modelBlock['Meta']['Learning']
+	#weight_decay = modelBlock['Meta']['Weight_Decay']
 
 	for key, val in modelBlock.items():
 		if (key != "Meta"):
 			modelInit(modelBlock, model_type, key, input_size, hidden_size, layers, image_size)
-			modelBlock[key]["Optimizer"] = optim.Adam(modelBlock[key]["Model"].parameters(), lr = lr, weight_decay = weight_decay)
+			#modelBlock[key]["Optimizer"] = optim.Adam(modelBlock[key]["Model"].parameters(), lr = lr, weight_decay = weight_decay)
 			modelBlock[key]["Model"].load_state_dict(modelBlock_State[key]["Model"])
-			modelBlock[key]["Optimizer"].load_state_dict(modelBlock_State[key]["Optimizer"])
+			#modelBlock[key]["Optimizer"].load_state_dict(modelBlock_State[key]["Optimizer"])
 
 	return modelBlock
 

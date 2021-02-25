@@ -94,6 +94,7 @@ def main(args):
 
 	# Create name for result folders
 	log_file = '../../PredPrey_Results/Propagation/Logs/'+ exp_name + '.log'
+	hyperopt_file = '../../PredPrey_Results/Propagation/ResultBlock/hyperparameter_' + exp_name + '.pth.tar'
 	result_file = '../../PredPrey_Results/Propagation/ResultBlock/resultBlock_' + exp_name + '.pth.tar'
 	model_file = '../../PredPrey_Results/Propagation/ResultBlock/modelBlock_' + exp_name + '.pth.tar'
 
@@ -155,8 +156,7 @@ def main(args):
 	best_loss = 1000.0
 	for key, val in modelBlock.items():
 		if (key != "Meta"):
-			resultBlock[key][epoch_total] = {"Loss": modelBlock[key]["Loss"], "Acc_All": modelBlock[key]["Acc_All"],
-				"Acc_Path": modelBlock[key]["Acc_Path"], "Acc_Distract": modelBlock[key]["Acc_Distract"]}
+			resultBlock[key][epoch_total] = {"Loss": modelBlock[key]["Loss"], "Acc_All": modelBlock[key]["Acc_All"]}
 			resultBlock[key]["Hyperparameter"]["Max_Epoch"] = epoch_total
 
 			if ((modelBlock[key]["Loss"] < best_loss)):
@@ -183,8 +183,6 @@ def main(args):
 	resultBlock["Meta"]["Batch"] = modelBlock[best_key]["Batch"]
 	resultBlock["Meta"]["Weight_Decay"] = modelBlock[best_key]["Weight_Decay"]
 	resultBlock["Meta"]["Acc_All"] = modelBlock[best_key]["Acc_All"]
-	resultBlock["Meta"]["Acc_Path"] = modelBlock[best_key]["Acc_Path"]
-	resultBlock["Meta"]["Acc_Distract"] = modelBlock[best_key]["Acc_Distract"]
 	resultBlock["Meta"]["Loss"] = modelBlock[best_key]["Loss"]
 	resultBlock["Meta"]["Best_Key"] = best_key
 
@@ -227,8 +225,7 @@ def pruneModel(modelBlock, resultBlock):
 			loss.append(modelBlock[key]["Loss"])
 
 			# Update all the results for the trained models
-			resultBlock[key][epoch_total] = {"Loss": modelBlock[key]["Loss"], "Acc_All": modelBlock[key]["Acc_All"],
-				"Acc_Path": modelBlock[key]["Acc_Path"], "Acc_Distract": modelBlock[key]["Acc_Distract"]}
+			resultBlock[key][epoch_total] = {"Loss": modelBlock[key]["Loss"], "Acc_All": modelBlock[key]["Acc_All"]}
 			resultBlock[key]["Hyperparameter"]["Max_Epoch"] = epoch_total
 
 

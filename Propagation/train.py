@@ -78,7 +78,6 @@ def trainModel(modelBlock, n_epochs, log_file):
 				runEpoch(modelBlock[key]["Model"], modelBlock["Meta"]["Loss_Function"], modelBlock[key]["Optimizer"], 
 					modelBlock["Meta"]["Type"], modelBlock[key]["Batch"], sampleDict)
 		print('Finishing epoch %d / %d' % (epoch_real + 1, epochs_total))
-		model = modelBlock[0]["Model"]
 
 		
 		# Want to record test error if the total number of epochs is a multiple 50 or this is the final epoch
