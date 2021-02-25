@@ -10,6 +10,7 @@ from matplotlib.colors import colorConverter
 import networkFiles as NF
 from samplesDecision import generateSamples
 from generateDictionary import loadStateDict
+from scipy.special import softmax
 
 
 # General parameters that would get set in other code
@@ -111,7 +112,7 @@ cmap6._lut[:,-1] = alphas
 
 
 # # Look at the output
-fig1, ax = plt.subplots(1, 4, figsize = (10, 3))
+fig1, ax = plt.subplots(1, 4, figsize = (10, 2))
 
 for q in range(2):
 
@@ -175,9 +176,11 @@ for q in range(2):
 
 
 	if q == 0 :
-		ax[2].step(np.arange(0, layers+1), np.insert(1.5 + np.round(trace[0, 0, :].detach().numpy()), 0, 1.5))
-		ax[2].step(np.arange(0, layers+1), np.insert(np.round(trace[0, 1, :].detach().numpy()), 0, 0), color='mediumvioletred')
-		ax[2].set_ylim((-0.2, 2.7))
+		logit = np.vstack((np.insert(10*np.round(trace[0, 0, :].detach().numpy()), 0, 0), np.insert(10*np.round(trace[0, 1, :].detach().numpy()), 0, 0)))
+		logit = softmax(logit, axis = 0)
+		ax[2].step(np.arange(0, layers+1), logit[0, :])
+		ax[2].step(np.arange(0, layers+1), logit[1, :], color='mediumvioletred')
+		ax[2].set_ylim((-0.2, 1.2))
 		ax[2].set_xlabel('Time Steps')
 
 		ax[2].tick_params(
@@ -203,9 +206,12 @@ for q in range(2):
 		ax[2].spines['left'].set_visible(False)
 	
 	if q == 1:
-		ax[3].step(np.arange(0, layers+1), np.insert(1.5 + np.concatenate(([0],trace[0, 0, :].detach().numpy())), 0, 1.5))
-		ax[3].step(np.arange(0, layers+1), np.insert(np.concatenate(([0], trace[0, 1, :].detach().numpy())), 0, 0), color='mediumvioletred')
-		ax[3].set_ylim((-0.2, 2.7))
+		logit = np.vstack((np.insert(5*np.concatenate(([0],trace[0, 0, :].detach().numpy())), 0, 0), np.insert(5*np.concatenate(([0], trace[0, 1, :].detach().numpy())), 0, 0)))
+		logit = softmax(logit, axis = 0)
+
+		ax[3].step(np.arange(0, layers+1), logit[0, :])
+		ax[3].step(np.arange(0, layers+1), logit[1, :], color='mediumvioletred')
+		ax[3].set_ylim((-0.2, 1.2))
 		ax[3].set_xlabel('Time Steps')
 
 		ax[3].tick_params(

@@ -123,7 +123,7 @@ def main(args):
 		print("=> no hyperparameter block found at '{}'".format(hyper_path))
 		hyperparameter = {}
 		hyperparameter[model_type] = {}
-		hyperparameter[model_type][layers] = {"Learning": 1e-4, "Batch": 32, "Weight_Decay": 0}
+		hyperparameter[model_type][layers] = {"Learning": 1e-4, "Batch": 32, "Weight_Decay": 1e-3}
 
 
 	# Set up experiment block

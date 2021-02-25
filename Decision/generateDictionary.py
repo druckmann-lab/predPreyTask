@@ -102,6 +102,9 @@ def modelInit(modelBlock, model_type, key, input_size, hidden_size, layers, imag
 	elif(model_type == "FixedDecision"):
 		num_nodes = image_size**2
 		modelBlock[key]["Model"] = NF.FixedDecision_PredPrey(num_nodes, layers, num_nodes*5, image_size)
+	elif(model_type == "SharedPixel"):
+		num_nodes = image_size**2
+		modelBlock[key]["Model"] = NF.PropagationOnly_SharedPixel(num_nodes, layers, num_nodes*5, image_size)
 	else:
 		logger.warning('Model type not recognized')
 
@@ -130,15 +133,15 @@ def loadStateDict(modelBlock_State):
 	layers = modelBlock['Meta']['Layers']
 	image_size = modelBlock['Meta']['N']
 
-	lr = modelBlock['Meta']['Learning']
-	weight_decay = modelBlock['Meta']['Weight_Decay']
+	#lr = modelBlock['Meta']['Learning']
+	#weight_decay = modelBlock['Meta']['Weight_Decay']
 
 	for key, val in modelBlock.items():
 		if (key != "Meta"):
 			modelInit(modelBlock, model_type, key, input_size, hidden_size, layers, image_size)
-			modelBlock[key]["Optimizer"] = optim.Adam(modelBlock[key]["Model"].parameters(), lr = lr, weight_decay = weight_decay)
+			#modelBlock[key]["Optimizer"] = optim.Adam(modelBlock[key]["Model"].parameters(), lr = lr, weight_decay = weight_decay)
 			modelBlock[key]["Model"].load_state_dict(modelBlock_State[key]["Model"])
-			modelBlock[key]["Optimizer"].load_state_dict(modelBlock_State[key]["Optimizer"])
+			#modelBlock[key]["Optimizer"].load_state_dict(modelBlock_State[key]["Optimizer"])
 
 	return modelBlock
 
